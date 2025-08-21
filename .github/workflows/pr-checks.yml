@@ -120,13 +120,11 @@ jobs:
         if: always()
         with:
           name: Maven Tests Report
+          token: ${{ secrets.GITHUB_TOKEN }}
           path: '**/target/surefire-reports/*.xml,**/target/failsafe-reports/*.xml'
           reporter: java-junit
           fail-on-error: false
-          # Отчеты публикуются как:
-          # 1. Аннотации к коммиту/PR
-          # 2. Комментарии к PR (если это PR)
-          # 3. Check runs в GitHub
+
 
       # 📈 Отправка покрытия в Codecov
       - name: Upload coverage to Codecov
