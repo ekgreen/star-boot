@@ -1,0 +1,58 @@
+# EditorConfig для единообразия кода
+root = true
+
+# Все файлы
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# Java файлы
+[*.java]
+
+# Скобка на той же строке (Allman style)
+ij_java_block_brace_style = end_of_line
+ij_java_class_brace_style = end_of_line
+ij_java_method_brace_style = end_of_line
+ij_java_lambda_brace_style = end_of_line
+
+max_line_length = 150
+ij_java_imports_layout = java.**,javax.**,*,org.**,com.**
+ij_java_class_count_to_use_import_on_demand = 999
+ij_java_names_count_to_use_import_on_demand = 999
+ij_java_packages_to_use_import_on_demand = java.awt.*,javax.swing.*
+
+# Spring аннотации на отдельных строках
+ij_java_method_annotation_wrap = split_into_lines
+ij_java_class_annotation_wrap = split_into_lines
+ij_java_field_annotation_wrap = split_into_lines
+
+# Пробелы
+ij_java_space_after_comma = true
+ij_java_space_after_comma_in_type_arguments = true
+ij_java_space_before_comma = false
+
+# XML файлы
+[*.xml]
+indent_size = 4
+ij_xml_keep_indents_on_empty_lines = false
+ij_xml_align_attributes = true
+
+# Properties файлы  
+[*.properties]
+indent_size = 4
+
+# YAML файлы
+[*.{yml,yaml}]
+indent_size = 2
+
+# JSON файлы
+[*.json]
+indent_size = 2
+
+# SQL файлы
+[*.sql]
+indent_size = 4

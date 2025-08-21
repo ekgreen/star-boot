@@ -1,0 +1,40 @@
+{
+  "groups": [
+    {
+      "name": "star.transport.http",
+      "type": "com.github.old.dog.star.boot.transport.http.autoconfigure.HttpClientProperties",
+      "description": "Конфигурация HTTP клиента для Star Boot"
+    },
+    {
+      "name": "star.transport.http.timeouts",
+      "type": "com.github.old.dog.star.boot.transport.http.autoconfigure.HttpClientProperties$Timeouts",
+      "description": "Настройки таймаутов для HTTP клиента"
+    }
+  ],
+  "properties": [
+    {
+      "name": "star.transport.http.type",
+      "type": "java.lang.String",
+      "description": "Тип HTTP клиента (OK, APACHE, etc.)",
+      "defaultValue": null
+    },
+    {
+      "name": "star.transport.http.timeouts.connection",
+      "type": "java.lang.Integer",
+      "description": "Таймаут соединения в миллисекундах",
+      "defaultValue": 3000
+    },
+    {
+      "name": "star.transport.http.timeouts.read",
+      "type": "java.lang.Integer",
+      "description": "Таймаут чтения данных в миллисекундах",
+      "defaultValue": 3000
+    },
+    {
+      "name": "star.transport.http.timeouts.write",
+      "type": "java.lang.Integer",
+      "description": "Таймаут записи данных в миллисекундах",
+      "defaultValue": 3000
+    }
+  ]
+}

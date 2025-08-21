@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+        "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+        "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<suppressions>
+    <!-- Исключаем сгенерированные JOOQ файлы -->
+    <suppress files="[\\/]generated-sources[\\/]jooq[\\/].*\.java" checks=".*"/>
+    <suppress files="[\\/]target[\\/]generated-sources[\\/].*\.java" checks=".*"/>
+    
+    <!-- Исключаем main классы Spring Boot -->
+    <suppress files=".*Application\.java" checks="HideUtilityClassConstructor"/>
+    
+    <!-- Lombok Data классы - разрешаем публичные поля -->
+    <suppress files=".*Pojo\.java" checks="VisibilityModifier"/>
+    <suppress files=".*Dto\.java" checks="VisibilityModifier"/>
+    <suppress files=".*Entity\.java" checks="VisibilityModifier"/>
+    
+    <!-- Test классы - более мягкие правила -->
+    <suppress files=".*[\\/]test[\\/].*\.java" checks="MagicNumber"/>
+    <suppress files=".*[\\/]test[\\/].*\.java" checks="MethodLength"/>
+    <suppress files=".*Test\.java" checks="MethodName"/>
+    
+    <!-- Configuration классы -->
+    <suppress files=".*Config\.java" checks="MethodCount"/>
+    
+    <!-- Утилитарные классы могут иметь много статических методов -->
+    <suppress files=".*Utils?\.java" checks="MethodCount"/>
+    
+    <!-- Константы могут содержать магические числа -->
+    <suppress files=".*Constants?\.java" checks="MagicNumber"/>
+    
+    <!-- SQL и миграции -->
+    <suppress files=".*[\\/]db[\\/].*" checks=".*"/>
+    
+    <!-- Разрешаем длинные строки в логах и URL -->
+    <suppress message="Line is longer than 140 characters.*log.*" checks="LineLength"/>
+    <suppress message="Line is longer than 140 characters.*http.*" checks="LineLength"/>
+</suppressions>
