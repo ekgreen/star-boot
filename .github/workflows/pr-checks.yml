@@ -26,6 +26,7 @@ jobs:
   # 📋 Информация о событии
   event-info:
     runs-on: ubuntu-latest
+    environment: dev
     outputs:
       event-type: ${{ steps.info.outputs.event-type }}
       target-branch: ${{ steps.info.outputs.target-branch }}
@@ -55,6 +56,7 @@ jobs:
   # ⚡ Быстрые проверки - компиляция с валидацией (checkstyle выполняется в фазе validate)
   quick-checks:
     runs-on: ubuntu-latest
+    environment: dev
     needs: event-info
 
     steps:
@@ -90,6 +92,7 @@ jobs:
   # 🧪 Тесты и покрытие
   tests-and-coverage:
     runs-on: ubuntu-latest
+    environment: dev
     needs: [event-info, quick-checks]
 
     steps:
@@ -128,8 +131,9 @@ jobs:
 
       # 📈 Отправка покрытия в Codecov
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
+          token: ${{ secrets.CODECOV_TOKEN }
           file: ./target/site/jacoco-aggregate/jacoco.xml
           flags: unittests
           name: codecov-umbrella
