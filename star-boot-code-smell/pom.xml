@@ -15,6 +15,10 @@
     <name>${project.groupId}:${project.artifactId}</name>
     <packaging>pom</packaging>
 
+    <properties>
+        <skip.on.project.root>true</skip.on.project.root>
+    </properties>
+
     <modules>
         <module>checkstyle</module>
     </modules>

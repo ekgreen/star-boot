@@ -195,6 +195,8 @@
         <jakarta.validation.version>3.1.1</jakarta.validation.version>
 
         <!-- Plugins Management -->
+        <skip.on.project.root>false</skip.on.project.root>
+
         <testcontainers-jooq-codegen.version>0.0.4</testcontainers-jooq-codegen.version>
         <liquibase.version>4.29.2</liquibase.version>
 
@@ -655,6 +657,42 @@
                                 </rules>
                             </configuration>
                         </execution>
+                        <execution>
+                            <id>merge-reports</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>merge</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${skip.on.project.root}</skip>
+                                <fileSets>
+                                    <fileSet>
+                                        <directory>${project.build.directory}/../</directory>
+                                        <includes>
+                                            <include>**/target/jacoco.exec</include>
+                                            <include>**/target/jacoco-it.exec</include>
+                                        </includes>
+                                    </fileSet>
+                                </fileSets>
+                                <destFile>${project.build.directory}/jacoco-merged.exec</destFile>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>report-aggregate</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>report-aggregate</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${skip.on.project.root}</skip>
+                                <dataFileIncludes>
+                                    <dataFileInclude>**/target/jacoco.exec</dataFileInclude>
+                                    <dataFileInclude>**/target/jacoco-it.exec</dataFileInclude>
+                                    <dataFileInclude>**/target/jacoco-merged.exec</dataFileInclude>
+                                </dataFileIncludes>
+                                <outputDirectory>${project.build.directory}/site/jacoco-aggregate</outputDirectory>
+                            </configuration>
+                        </execution>
                     </executions>
                 </plugin>
 
@@ -979,10 +1017,20 @@
                     </executions>
                 </plugin>
 
-
             </plugins>
 
         </pluginManagement>
+
+        <plugins>
+            <!-- JaCoCo агрегация на уровне корневого проекта -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+
     </build>
+
+
 
 </project>

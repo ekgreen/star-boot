@@ -16,6 +16,8 @@
     <packaging>pom</packaging>
 
     <properties>
+        <skip.on.project.root>true</skip.on.project.root>
+
         <!-- Build -->
         <java.version>24</java.version>
         <maven.compiler.source>24</maven.compiler.source>
