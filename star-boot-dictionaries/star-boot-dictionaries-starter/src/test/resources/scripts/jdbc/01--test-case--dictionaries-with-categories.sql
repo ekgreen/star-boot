@@ -53,4 +53,4 @@ $BLOCK$
             OWNED BY test.categories.id;
 
     END
-$BLOCK$
+$BLOCK$;
