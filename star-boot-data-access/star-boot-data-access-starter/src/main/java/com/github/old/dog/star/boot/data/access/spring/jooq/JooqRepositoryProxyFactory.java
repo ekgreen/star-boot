@@ -2,6 +2,7 @@ package com.github.old.dog.star.boot.data.access.spring.jooq;
 
 import com.github.old.dog.star.boot.data.access.jooq.api.JooqObjectRepository;
 import com.github.old.dog.star.boot.reflection.ReflectionTools;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -17,6 +18,7 @@ import java.lang.reflect.Proxy;
  * @since 1.0
  */
 @Slf4j
+@NoArgsConstructor
 public class JooqRepositoryProxyFactory {
 
     /**

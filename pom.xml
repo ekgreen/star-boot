@@ -84,6 +84,8 @@
             </distributionManagement>
 
             <build>
+
+
                 <plugins>
                     <!-- Deploy Plugin -->
                     <plugin>
@@ -170,7 +172,6 @@
                 </plugins>
             </build>
         </profile>
-
     </profiles>
 
 
@@ -190,6 +191,7 @@
         <allure-maven-plugin.version>2.14.0</allure-maven-plugin.version>
         <nexus-staging-maven-plugin.version>0.8.0</nexus-staging-maven-plugin.version>
         <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
+        <maven-help-plugin.version>3.4.0</maven-help-plugin.version>
 
         <!-- Tools -->
         <jakarta.validation.version>3.1.1</jakarta.validation.version>
@@ -242,6 +244,17 @@
         <sonatype.publishing.server.id>ossrh</sonatype.publishing.server.id>
         <gpg.key.id>${env.GPG_KEY_ID}</gpg.key.id>
         <gpg.passphrase>${env.GPG_PASSPHRASE}</gpg.passphrase>
+
+        <skip.sonar>false</skip.sonar>
+        <sonar.host.url>${env.SONAR_URL}</sonar.host.url>
+        <sonar.token>${env.SONAR_TOKEN}</sonar.token>
+        <sonar.branch.name>main</sonar.branch.name>
+        <sonar.projectKey>star-boot</sonar.projectKey>
+        <sonar.projectName>Star Boot</sonar.projectName>
+        <sonar.java.source>${maven.compiler.source}</sonar.java.source>
+        <sonar.java.target>${maven.compiler.target}</sonar.java.target>
+
+        <skip.show.props>false</skip.show.props>
 
         <!-- Spring Boot (управляется через spring-boot-dependencies) -->
         <spring-boot.version>3.5.4</spring-boot.version>
@@ -475,6 +488,26 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
                     <version>${maven-site-plugin.version}</version>
+                </plugin>
+
+                <!-- Sonar plugin -->
+                <plugin>
+                    <groupId>org.sonarsource.scanner.maven</groupId>
+                    <artifactId>sonar-maven-plugin</artifactId>
+                    <version>4.0.0.4121</version>
+                    <configuration>
+                        <skip>${skip.sonar}</skip>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>sonar-analysis</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>sonar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+
                 </plugin>
 
                 <!-- Checkstyle статический анализ -->
@@ -755,7 +788,8 @@
                                     <artifactId>star-boot-dependencies</artifactId>
                                     <version>0.0.1-20250821.100956-1</version>
                                     <type>pom</type>
-                                </dependency>                            </requireJavaVersion>
+                                </dependency>
+                            </requireJavaVersion>
 
                             <!-- 2. БЕЗОПАСНОСТЬ ЗАВИСИМОСТЕЙ -->
                             <bannedDependencies>
@@ -1017,20 +1051,162 @@
                     </executions>
                 </plugin>
 
+                <!-- ============================================== -->
+                <!-- Вспомагательные плагины -->
+                <!-- ============================================== -->
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-help-plugin</artifactId>
+                    <version>${maven-help-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>show-effective-properties</id>
+                            <phase>initialize</phase>
+                            <goals>
+                                <goal>evaluate</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${skip.show.props}</skip>
+                                <expression>project.properties</expression>
+                                <quiet>false</quiet>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+
             </plugins>
 
         </pluginManagement>
 
         <plugins>
+            <!-- Sonar отправляет отчет в мультимодульном проекте из рута -->
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+            </plugin>
             <!-- JaCoCo агрегация на уровне корневого проекта -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
             </plugin>
+            <!-- Вывод разерзолвленных свойст (везде кроме дева отключать) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-help-plugin</artifactId>
+            </plugin>
         </plugins>
 
+        <!--
+                === MAVEN LIFECYCLES TABLE ===
+
+                ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+                │                                          MAVEN LIFECYCLES                                                   │
+                ├─────────────────┬─────────────────────────┬─────────────────────────────────────────────────────────────────┤
+                │   LIFECYCLE     │         PHASE           │                    DESCRIPTION                                  │
+                ├─────────────────┼─────────────────────────┼─────────────────────────────────────────────────────────────────┤
+                │                 │ pre-clean               │ Выполнение процессов перед очисткой                             │
+                │ CLEAN           │ clean                   │ Удаление файлов сгенерированных сборкой                         │
+                │                 │ post-clean              │ Выполнение процессов для завершения очистки                     │
+                ├─────────────────┼─────────────────────────┼─────────────────────────────────────────────────────────────────┤
+                │                 │ validate                │ Проверка корректности проекта                                   │
+                │                 │ initialize              │ Инициализация состояния сборки                                  │
+                │                 │ generate-sources        │ Генерация исходного кода                                        │
+                │                 │ process-sources         │ Обработка исходного кода                                        │
+                │                 │ generate-resources      │ Генерация ресурсов                                              │
+                │                 │ process-resources       │ Обработка ресурсов                                              │
+                │                 │ compile                 │ Компиляция исходного кода                                       │
+                │                 │ process-classes         │ Пост-обработка скомпилированных классов                         │
+                │                 │ generate-test-sources   │ Генерация исходного кода тестов                                 │
+                │ DEFAULT         │ process-test-sources    │ Обработка исходного кода тестов                                 │
+                │                 │ generate-test-resources │ Создание тестовых ресурсов                                      │
+                │                 │ process-test-resources  │ Обработка тестовых ресурсов                                     │
+                │                 │ test-compile            │ Компиляция тестов                                               │
+                │                 │ process-test-classes    │ Пост-обработка тестовых классов                                 │
+                │                 │ test                    │ Запуск unit тестов                                              │
+                │                 │ prepare-package         │ Подготовка к упаковке                                           │
+                │                 │ package                 │ Упаковка в JAR/WAR/EAR                                          │
+                │                 │ pre-integration-test    │ Подготовка к интеграционным тестам                              │
+                │                 │ integration-test        │ Запуск интеграционных тестов                                    │
+                │                 │ post-integration-test   │ Очистка после интеграционных тестов                             │
+                │                 │ verify                  │ Проверка качества пакета                                        │
+                │                 │ install                 │ Установка в локальный репозиторий                               │
+                │                 │ deploy                  │ Развертывание в удаленный репозиторий                           │
+                ├─────────────────┼─────────────────────────┼─────────────────────────────────────────────────────────────────┤
+                │                 │ pre-site                │ Подготовка к генерации сайта                                    │
+                │ SITE            │ site                    │ Генерация документации сайта                                    │
+                │                 │ post-site               │ Завершение генерации сайта                                      │
+                │                 │ site-deploy             │ Развертывание сайта на веб-сервере                              │
+                └─────────────────┴─────────────────────────┴─────────────────────────────────────────────────────────────────┘
+
+                === MAVEN LIFECYCLE FLOW DIAGRAM ===
+
+                                        ┌─────────────────┐
+                                        │  CLEAN CYCLE    │
+                                        │                 │
+                                        │ pre-clean       │
+                                        │      ↓          │
+                                        │    clean        │
+                                        │      ↓          │
+                                        │ post-clean      │
+                                        └─────────────────┘
+                                                │
+                                                ▼
+                ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+                │                                  DEFAULT LIFECYCLE                                          │
+                │                                                                                             │
+                │  validate → initialize → generate-sources → process-sources → generate-resources            │
+                │      ↓                                                                                      │
+                │  process-resources → compile → process-classes → generate-test-sources                      │
+                │      ↓                                                                                      │
+                │  process-test-sources → generate-test-resources → process-test-resources                    │
+                │      ↓                                                                                      │
+                │  test-compile → process-test-classes → test → prepare-package → package                     │
+                │      ↓                                                                                      │
+                │  pre-integration-test → integration-test → post-integration-test                            │
+                │      ↓                                                                                      │
+                │  verify → install → deploy                                                                  │
+                └─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                │
+                                                ▼
+                                        ┌─────────────────┐
+                                        │   SITE CYCLE    │
+                                        │                 │
+                                        │   pre-site      │
+                                        │      ↓          │
+                                        │     site        │
+                                        │      ↓          │
+                                        │   post-site     │
+                                        │      ↓          │
+                                        │  site-deploy    │
+                                        └─────────────────┘
+
+                === COMMON MAVEN COMMANDS ===
+
+                • mvn clean                    → Выполняет только clean lifecycle
+                • mvn compile                  → Выполняет фазы до compile включительно
+                • mvn test                     → Выполняет фазы до test включительно
+                • mvn package                  → Выполняет фазы до package включительно
+                • mvn install                  → Выполняет фазы до install включительно
+                • mvn deploy                   → Выполняет полный default lifecycle
+                • mvn clean install            → Выполняет clean + default до install
+                • mvn clean deploy             → Выполняет clean + полный default lifecycle
+                • mvn site                     → Выполняет site lifecycle
+                • mvn clean install site       → Выполняет все три lifecycle
+
+                === PLUGIN BINDING EXAMPLES ===
+
+                Phase                    │ Default Plugin:Goal (JAR packaging)
+                ─────────────────────────┼────────────────────────────────────
+                process-resources        │ maven-resources-plugin:resources
+                compile                  │ maven-compiler-plugin:compile
+                process-test-resources   │ maven-resources-plugin:testResources
+                test-compile             │ maven-compiler-plugin:testCompile
+                test                     │ maven-surefire-plugin:test
+                package                  │ maven-jar-plugin:jar
+                install                  │ maven-install-plugin:install
+                deploy                   │ maven-deploy-plugin:deploy
+                -->
     </build>
-
-
 
 </project>

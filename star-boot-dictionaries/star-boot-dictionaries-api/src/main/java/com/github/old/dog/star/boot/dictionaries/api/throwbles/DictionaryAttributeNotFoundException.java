@@ -2,6 +2,7 @@ package com.github.old.dog.star.boot.dictionaries.api.throwbles;
 
 
 import com.github.old.dog.star.boot.dictionaries.api.DictionaryMetadata;
+import com.github.old.dog.star.boot.model.Tokens;
 
 /**
  * Исключение, возникающее при попытке обращения к несуществующему атрибуту словарного объекта.
@@ -61,7 +62,7 @@ public class DictionaryAttributeNotFoundException extends DictionaryMetadataExce
     public DictionaryAttributeNotFoundException(String attributeName, Class<?> dictionaryClass) {
         super(String.format("Атрибут '%s' не найден в словарном объекте класса '%s'",
                 attributeName,
-                dictionaryClass != null ? dictionaryClass.getSimpleName() : "unknown"));
+                dictionaryClass != null ? dictionaryClass.getSimpleName() : Tokens.UNKNOWN));
         this.attributeName = attributeName;
         this.dictionaryClass = dictionaryClass;
     }

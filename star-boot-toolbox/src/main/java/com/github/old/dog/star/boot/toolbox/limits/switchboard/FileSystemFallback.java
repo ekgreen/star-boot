@@ -230,8 +230,45 @@ public class FileSystemFallback implements Switchboard.FallbackWithInit<byte[]> 
         List<String> lines = Files.readAllLines(iniPath);
 
         Predicate<String> isNewBlock = line -> line.startsWith("[") && line.endsWith("]");
+        BiFunction<Integer, Map<String, String>, Integer> blockReader = blockReader(iniPath, lines, isNewBlock);
 
-        BiFunction<Integer, Map<String, String>, Integer> blockReader = (index, store) -> {
+        for (int i = 0; i < lines.size(); ) {
+            String line = lines.get(i);
+
+            if (isNewBlock.test(line)) {
+
+                switch (line) {
+                    case "[metadata]" -> {
+                        Map<String, String> metadataBlock = new HashMap<>();
+                        i = blockReader.apply(i, metadataBlock);
+
+                        builder.metadata(metadataBlock);
+
+                        continue;
+                    }
+                    case "[system]" -> {
+                        Map<String, String> system = new HashMap<>();
+                        i = blockReader.apply(i, system);
+
+                        builder.createdAt(LocalDateTime.parse(system.get("created_at"), DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                        builder.javaVersion(system.get("java_version"));
+                        builder.osName(system.get("os_name"));
+                        builder.dataClassName(system.get("data_class"));
+
+                        continue;
+                    }
+                    default -> log.warn("unknow .ini file tag = " + line);
+                }
+            }
+
+            i = i + 1;
+        }
+
+        return builder.build();
+    }
+
+    private  BiFunction<Integer, Map<String, String>, Integer> blockReader(Path iniPath, List<String> lines, Predicate<String> isNewBlock) {
+        return (index, store) -> {
             int i = index + 1;
             for (; i < lines.size(); i++) {
                 String line = lines.get(i);
@@ -258,40 +295,6 @@ public class FileSystemFallback implements Switchboard.FallbackWithInit<byte[]> 
 
             return i;
         };
-
-        for (int i = 0; i < lines.size(); ) {
-            String line = lines.get(i);
-
-            if (isNewBlock.test(line)) {
-
-                switch (line) {
-                    case "[metadata]" -> {
-                        Map<String, String> metadata = new HashMap<>();
-                        i = blockReader.apply(i, metadata);
-
-                        builder.metadata(metadata);
-
-                        continue;
-                    }
-                    case "[system]" -> {
-                        Map<String, String> system = new HashMap<>();
-                        i = blockReader.apply(i, system);
-
-                        builder.createdAt(LocalDateTime.parse(system.get("created_at"), DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-                        builder.javaVersion(system.get("java_version"));
-                        builder.osName(system.get("os_name"));
-                        builder.dataClassName(system.get("data_class"));
-
-                        continue;
-                    }
-                    default -> log.warn("unknow .ini file tag = " + line);
-                }
-            }
-
-            i = i + 1;
-        }
-
-        return builder.build();
     }
 
     /**

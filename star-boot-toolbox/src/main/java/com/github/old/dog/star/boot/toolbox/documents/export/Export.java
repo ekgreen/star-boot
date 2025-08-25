@@ -1,5 +1,9 @@
 package com.github.old.dog.star.boot.toolbox.documents.export;
 
+import org.jetbrains.annotations.NotNull;
+import java.util.Arrays;
+import java.util.Objects;
+
 /**
  * Represents the result of an export operation.
  * <p>
@@ -21,4 +25,38 @@ public record Export(
     String extension,
     byte[] data
 ) {
+
+    @Override
+    public boolean equals(Object object) {
+        if (object == null || getClass() != object.getClass()) {
+            return false;
+        }
+
+        Export export = (Export) object;
+        return Arrays.equals(data, export.data)
+               && Objects.equals(exporter, export.exporter)
+               && Objects.equals(mimeType, export.mimeType)
+               && Objects.equals(extension, export.extension)
+               && Objects.equals(documentType, export.documentType);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(documentType);
+        result = 31 * result + Objects.hashCode(exporter);
+        result = 31 * result + Objects.hashCode(mimeType);
+        result = 31 * result + Objects.hashCode(extension);
+        result = 31 * result + Arrays.hashCode(data);
+        return result;
+    }
+
+    @Override
+    public @NotNull String toString() {
+        return "Export{"
+               + "documentType='" + documentType + '\''
+               + ", exporter='" + exporter + '\''
+               + ", mimeType='" + mimeType + '\''
+               + ", extension='" + extension + '\''
+               + '}';
+    }
 }

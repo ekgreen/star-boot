@@ -2,6 +2,7 @@ package com.github.old.dog.star.boot.dictionaries.api.throwbles;
 
 import com.github.old.dog.star.boot.dictionaries.api.DictionaryRow;
 import com.github.old.dog.star.boot.dictionaries.api.DictionaryRowMapper;
+import com.github.old.dog.star.boot.model.Tokens;
 
 /**
  * Исключение, возникающее при ошибках преобразования данных строки словаря в объекты.
@@ -67,7 +68,7 @@ public class DictionaryMappingException extends DictionaryMetadataException {
      */
     public DictionaryMappingException(Class<?> targetType, Throwable cause) {
         super(String.format("Не удалось преобразовать строку словаря в объект типа '%s': %s",
-                           targetType != null ? targetType.getSimpleName() : "unknown",
+                           targetType != null ? targetType.getSimpleName() : Tokens.UNKNOWN,
                            cause != null ? cause.getMessage() : "неизвестная ошибка"),
               cause);
         this.targetType = targetType;
@@ -183,7 +184,7 @@ public class DictionaryMappingException extends DictionaryMetadataException {
     public static DictionaryMappingException validationError(Class<?> targetType, String validationMessage) {
         String message = String.format(
             "Ошибка валидации при создании объекта типа '%s': %s",
-            targetType != null ? targetType.getSimpleName() : "unknown",
+            targetType != null ? targetType.getSimpleName() : Tokens.UNKNOWN,
             validationMessage
         );
 

@@ -40,11 +40,6 @@ public class IdentityTransliterator implements Transliterator {
      */
     @Override
     public @Nullable String get(String ch) {
-        if (ch == null || ch.isEmpty()) {
-            return ch;
-        }
-
-        // Для identity транслитератора возвращаем строку как есть
         return ch;
     }
 

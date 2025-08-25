@@ -76,7 +76,7 @@ jobs:
       - name: Compile with validation
         run: |
           echo "::group::📦 Compiling project with validation (includes Checkstyle)"
-          mvn clean compile -P prod-like-track -B
+          mvn clean compile -P prod-like-track -B -Dskip.sonar=true
           echo "::endgroup::"
         # Компиляция с профилем prod-like-track автоматически включает checkstyle в фазе validate
 
@@ -113,7 +113,7 @@ jobs:
         run: |
           echo "::group::🧪 Running tests with JaCoCo coverage (aggregation included)"
           mvn clean verify -P prod-like-track -B \
-            -Djacoco.halt.on.failure=false
+            -Djacoco.halt.on.failure=false -Dskip.sonar=true
           echo "::endgroup::"
         # verify фаза с профилем prod-like-track уже включает jacoco:report-aggregate
 

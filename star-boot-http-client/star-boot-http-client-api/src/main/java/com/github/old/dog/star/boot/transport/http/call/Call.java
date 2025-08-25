@@ -2,6 +2,7 @@ package com.github.old.dog.star.boot.transport.http.call;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.old.dog.star.boot.interfaces.Converter;
+import com.github.old.dog.star.boot.model.Tokens;
 import com.github.old.dog.star.boot.toolbox.collections.touples.Pair;
 import com.github.old.dog.star.boot.toolbox.core.Converters;
 import com.github.old.dog.star.boot.transport.http.body.ByteArray;
@@ -152,7 +153,7 @@ public final class Call {
             return;
         }
 
-        String cookie = this.headers.get("Cookie");
+        String cookie = this.headers.get(Tokens.COOKIE);
 
         if (!ObjectUtils.isEmpty(cookie)) {
             cookie = cookie + ";" + header;
@@ -160,7 +161,7 @@ public final class Call {
             cookie = header;
         }
 
-        this.headers.put("Cookie", cookie);
+        this.headers.put(Tokens.COOKIE, cookie);
     }
 
     /**
@@ -215,7 +216,7 @@ public final class Call {
      * @throws BodyConversionException if the Content-Type header is missing or unsupported
      */
     public PostCaller post(Object payload) {
-        final String contentTypeHeader = headers.get("Content-Type");
+        final String contentTypeHeader = headers.get(Tokens.CONTENT_TYPE);
 
         if (contentTypeHeader == null) {
             throw new BodyConversionException("for raw object types header Content-Type must be defined");
@@ -224,22 +225,12 @@ public final class Call {
         final String contentType = contentTypeHeader.split(";")[0];
 
         Converter<Object, Body> converter = switch (contentType) {
-            case "application/json" -> Converters.jsonWriteAsBytes().after(ByteArray::new);
-            case "application/x-www-form-urlencoded" -> Call.formDataConverter();
+            case Tokens.MEDIA_TYPE_APPLICATION_JSON -> Converters.jsonWriteAsBytes().after(ByteArray::new);
+            case Tokens.MEDIA_TYPE_X_FORM -> Call.formDataConverter();
             case null, default -> throw new BodyConversionException("for raw object types header Content-Type must be defined");
         };
 
         return post(converter.convert(payload));
-    }
-
-    private void prepare() {
-        // подготавливаем заголовки (компилируем не посчитанные заголовки)
-        for (String key : headers.keySet()) {
-            // noinspection SwitchStatementWithTooFewBranches
-            headers.compute(key, (header, value) -> String.valueOf(switch (header) {
-                default -> value;
-            }));
-        }
     }
 
     /**
@@ -252,8 +243,8 @@ public final class Call {
      * @throws BodyConversionException if the Content-Type header is missing or unsupported
      */
     private <R> R castResponse(Payload payload, Class<R> responseType) {
-        Converter<byte[], R> converter = switch (payload.header("Content-Type")) {
-            case "application/json" -> Converters.jsonReaderAs(responseType);
+        Converter<byte[], R> converter = switch (payload.header(Tokens.CONTENT_TYPE)) {
+            case Tokens.MEDIA_TYPE_APPLICATION_JSON -> Converters.jsonReaderAs(responseType);
             case null, default -> throw new BodyConversionException("for raw object types header Content-Type must be defined");
         };
 
@@ -349,9 +340,9 @@ public final class Call {
                 .withPayload(payload)
                 .build();
 
-            Payload payload = httpClient.post(post);
+            Payload response = httpClient.post(post);
 
-            return castResponse(payload, responseType);
+            return castResponse(response, responseType);
         }
 
         /**
@@ -442,7 +433,7 @@ public final class Call {
          * @return this Header instance for method chaining
          */
         public Header applicationJson() {
-            add("Content-Type", "application/json");
+            add(Tokens.CONTENT_TYPE, Tokens.MEDIA_TYPE_APPLICATION_JSON);
             return this;
         }
 
@@ -452,7 +443,7 @@ public final class Call {
          * @return this Header instance for method chaining
          */
         public Header formUrlencoded() {
-            add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+            add(Tokens.CONTENT_TYPE, "application/x-www-form-urlencoded; charset=UTF-8");
             return this;
         }
 
@@ -497,7 +488,7 @@ public final class Call {
          */
         public Header cookies(String cookies) {
             if (!ObjectUtils.isEmpty(cookies)) {
-                add("Cookie", cookies);
+                add(Tokens.COOKIE, cookies);
             }
 
             return this;
@@ -509,7 +500,7 @@ public final class Call {
          * @return this Header instance for method chaining
          */
         public Header cacheControl() {
-            add("Cache-Control", "no-cache");
+            add(Tokens.CACHE_CONTROL, "no-cache");
             return this;
         }
 
@@ -587,7 +578,7 @@ public final class Call {
         /**
          * List of cookie name-value pairs to be added to the request.
          */
-        private final List<Pair<String, String>> cookies = new ArrayList<>();
+        private final List<Pair<String, String>> values = new ArrayList<>();
 
         /**
          * Reference to the parent Call instance.
@@ -603,7 +594,7 @@ public final class Call {
          */
         public Cookies add(String name, String value) {
             if (!ObjectUtils.isEmpty(name) && !ObjectUtils.isEmpty(value)) {
-                this.cookies.add(Pair.keyValue(name, value));
+                this.values.add(Pair.keyValue(name, value));
             }
 
             return this;
@@ -615,7 +606,7 @@ public final class Call {
          * @return the parent Call instance
          */
         public Call build() {
-            root.withCookies(cookies);
+            root.withCookies(values);
             return root;
         }
     }
