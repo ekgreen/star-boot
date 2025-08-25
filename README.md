@@ -1,7 +1,7 @@
 # Star Boot Framework
 
 [![CI/CD](https://github.com/ekgreen/star-boot/workflows/Build/badge.svg)](https://github.com/ekgreen/star-boot/actions)
-[![Coverage](https://codecov.io/gh/ekgreen/star-boot/branch/main/graph/badge.svg)](https://codecov.io/gh/ekgreen/star-boot)
+[![Coverage](https://codecov.io/gh/ekgreen/star-boot/graph/badge.svg)](https://codecov.io/gh/ekgreen/star-boot)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
 Набор библиотек для работы с Java проектами, построенный на основе Spring Boot.
