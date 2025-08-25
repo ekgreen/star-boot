@@ -1,0 +1,171 @@
+# 🚀 Main Branch CI - Пост-мерж валидация и обновление метрик
+#
+# Выполняется после успешного мержа PR в основные ветки:
+# - Быстрая компиляционная проверка целостности
+# - Обновление coverage badge для основной ветки
+# - Уведомления об успешном деплое (при необходимости)
+#
+# Триггеры: push в main/master ветки (обычно после мержа PR)
+name: Main Branch CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+env:
+  MAIN_BRANCH_NAME: ${{ github.ref_name }}
+
+jobs:
+  # 📋 Анализ контекста основной ветки
+  main-branch-context:
+    name: 📋 Main Branch Context
+    runs-on: ubuntu-latest
+    outputs:
+      branch-name: ${{ github.ref_name }}
+      commit-sha: ${{ github.sha }}
+      is-merge-commit: ${{ contains(github.event.head_commit.message, 'Merge pull request') }}
+
+    steps:
+      - name: Display Branch Information
+        run: |
+          echo "🚀 Main Branch CI Pipeline Started"
+          echo "🌳 Branch: ${{ github.ref_name }}"
+          echo "📝 Commit: ${{ github.sha }}"
+          echo "👤 Author: ${{ github.event.head_commit.author.name }}"
+          echo "💬 Message: ${{ github.event.head_commit.message }}"
+          echo "🔄 Is merge commit: ${{ contains(github.event.head_commit.message, 'Merge pull request') }}"
+
+  # ⚡ Быстрая валидация целостности после мержа
+  post-merge-integrity-check:
+    name: ⚡ Post-Merge Integrity Check
+    runs-on: ubuntu-latest
+    environment: production
+    needs: main-branch-context
+
+    steps:
+      - name: Checkout Main Branch
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 24
+        uses: actions/setup-java@v4
+        with:
+          java-version: '24'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Verify Main Branch Integrity
+        run: |
+          echo "::group::⚡ Verifying main branch integrity"
+          echo "Performing quick compilation check to ensure merge didn't break build..."
+          mvn clean compile -B -q
+          echo "✅ Main branch integrity verified successfully"
+          echo "::endgroup::"
+
+  # 📊 Обновление метрик покрытия для основной ветки
+  coverage-metrics-update:
+    name: 📊 Update Coverage Metrics
+    runs-on: ubuntu-latest
+    environment: production
+    needs: [main-branch-context, post-merge-integrity-check]
+
+    steps:
+      - name: Checkout Main Branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK 24
+        uses: actions/setup-java@v4
+        with:
+          java-version: '24'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Generate Coverage Report for Main Branch
+        run: |
+          echo "::group::📊 Generating coverage report for main branch"
+          echo "Running tests and generating coverage for badge update..."
+          mvn clean verify -B -q \
+            -Dskip.checkstyle=true \
+            -Djacoco.halt.on.failure=false
+          echo "::endgroup::"
+
+      - name: Update Main Branch Coverage in Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./target/site/jacoco-aggregate/jacoco.xml
+          flags: main-branch,production
+          name: main-branch-coverage
+          fail_ci_if_error: false
+          verbose: false
+
+      - name: Archive Main Branch Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-branch-${{ needs.main-branch-context.outputs.commit-sha }}-coverage
+          path: '**/target/site/jacoco-aggregate/**/*'
+          if-no-files-found: ignore
+          retention-days: 30
+
+  # 🏁 Итоговый статус CI основной ветки
+  main-branch-ci-summary:
+    name: 🏁 Main Branch CI Summary
+    runs-on: ubuntu-latest
+    needs: [main-branch-context, post-merge-integrity-check, coverage-metrics-update]
+    if: always()
+
+    steps:
+      - name: Generate CI Summary
+        run: |
+          echo "::group::🏁 Main Branch CI Summary"
+
+          BRANCH="${{ needs.main-branch-context.outputs.branch-name }}"
+          INTEGRITY_STATUS="${{ needs.post-merge-integrity-check.result }}"
+          COVERAGE_STATUS="${{ needs.coverage-metrics-update.result }}"
+          IS_MERGE="${{ needs.main-branch-context.outputs.is-merge-commit }}"
+
+          echo "📊 Main Branch CI Results for: $BRANCH"
+          echo "  ⚡ Post-merge integrity: $INTEGRITY_STATUS"
+          echo "  📊 Coverage metrics update: $COVERAGE_STATUS"
+
+          if [[ "$INTEGRITY_STATUS" == "success" && "$COVERAGE_STATUS" == "success" ]]; then
+            echo ""
+            echo "✅ Main branch CI completed successfully!"
+            echo "🎉 $BRANCH is ready for production deployment"
+            [[ "$IS_MERGE" == "true" ]] && echo "🔄 Processed merge commit successfully"
+          else
+            echo ""
+            echo "❌ Main branch CI encountered issues"
+            echo "🚨 Immediate attention required for $BRANCH"
+            exit 1
+          fi
+
+          echo "::endgroup::"
+
+      - name: Create Deployment Summary
+        if: always()
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
+          ## 🚀 Main Branch CI Results
+
+          ### 🌳 Branch Information
+          - **Branch**: `${{ needs.main-branch-context.outputs.branch-name }}`
+          - **Commit**: `${{ needs.main-branch-context.outputs.commit-sha }}`
+          - **Merge Commit**: ${{ needs.main-branch-context.outputs.is-merge-commit == 'true' && '✅ Yes' || '❌ No' }}
+
+          ### 🎯 CI Pipeline Results
+          | Step | Status | Description |
+          |------|---------|-------------|
+          | ⚡ Integrity Check | ${{ needs.post-merge-integrity-check.result == 'success' && '✅ Passed' || '❌ Failed' }} | Post-merge build verification |
+          | 📊 Coverage Update | ${{ needs.coverage-metrics-update.result == 'success' && '✅ Passed' || '❌ Failed' }} | Coverage metrics and badge update |
+
+          ### 🚀 Deployment Status
+          ${{ (needs.post-merge-integrity-check.result == 'success' && needs.coverage-metrics-update.result == 'success') && '✅ **Ready for Production** - All CI checks passed successfully!' || '❌ **Deployment Blocked** - CI issues detected, deployment should be postponed.' }}
+
+          ### 🔗 Useful Links
+          - [📊 Coverage Report](https://codecov.io/gh/ekgreen/star-boot/branch/${{ needs.main-branch-context.outputs.branch-name }})
+          - [🏗️ Build Artifacts](https://github.com/ekgreen/star-boot/actions/runs/${{ github.run_id }})
+          EOF

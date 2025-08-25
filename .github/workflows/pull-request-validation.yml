@@ -1,0 +1,209 @@
+# 🔍 Pull Request Validation - Полная проверка качества кода перед мержем
+#
+# Выполняет все необходимые проверки для PR:
+# - Компиляция с валидацией стиля кода (Checkstyle)
+# - Выполнение всех тестов с генерацией покрытия
+# - Публикация отчетов о тестах и покрытии в комментариях PR
+# - Загрузка артефактов для анализа
+#
+# Триггеры: создание/обновление PR в основные ветки
+name: Pull Request Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+      - 'dev/**'
+      - 'release/**'
+
+jobs:
+  # 📋 Анализ информации о PR
+  pr-context-analysis:
+    name: 📋 Analyze PR Context
+    runs-on: ubuntu-latest
+    environment: dev
+    outputs:
+      pr-number: ${{ github.event.number }}
+      source-branch: ${{ github.head_ref }}
+      target-branch: ${{ github.base_ref }}
+      author: ${{ github.event.pull_request.user.login }}
+
+    steps:
+      - name: Display PR Information
+        run: |
+          echo "🔍 Pull Request Validation Started"
+          echo "📝 PR #${{ github.event.number }}"
+          echo "🔀 ${{ github.head_ref }} → ${{ github.base_ref }}"
+          echo "👤 Author: ${{ github.event.pull_request.user.login }}"
+          echo "📊 Files changed: ${{ github.event.pull_request.changed_files }}"
+
+  # ⚡ Быстрые проверки: компиляция + валидация стиля
+  code-quality-validation:
+    name: ⚡ Code Quality & Compilation
+    runs-on: ubuntu-latest
+    environment: dev
+    needs: pr-context-analysis
+
+    steps:
+      - name: Checkout PR Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK 24
+        uses: actions/setup-java@v4
+        with:
+          java-version: '24'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Validate Code Style & Compile
+        run: |
+          echo "::group::🏗️ Code Style Validation & Compilation"
+          echo "Running Checkstyle validation and project compilation..."
+          mvn clean compile -P prod-like-track -B -Dskip.sonar=true
+          echo "::endgroup::"
+
+      - name: Upload Code Style Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-${{ needs.pr-context-analysis.outputs.pr-number }}-checkstyle-results
+          path: '**/target/checkstyle-result.xml'
+          if-no-files-found: ignore
+
+  # 🧪 Полное тестирование с покрытием кода
+  comprehensive-testing:
+    name: 🧪 Tests & Coverage Analysis
+    runs-on: ubuntu-latest
+    environment: dev
+    needs: [pr-context-analysis, code-quality-validation]
+
+    steps:
+      - name: Checkout PR Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK 24
+        uses: actions/setup-java@v4
+        with:
+          java-version: '24'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Execute Test Suite with Coverage
+        run: |
+          echo "::group::🧪 Running Full Test Suite"
+          echo "Executing unit & integration tests with JaCoCo coverage..."
+          mvn clean verify -P prod-like-track -B \
+            -Djacoco.halt.on.failure=false -Dskip.sonar=true
+          echo "::endgroup::"
+
+      - name: Publish Test Results to PR
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: 🧪 Maven Test Results (PR #${{ needs.pr-context-analysis.outputs.pr-number }})
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: '**/target/surefire-reports/*.xml,**/target/failsafe-reports/*.xml'
+          reporter: java-junit
+          fail-on-error: false
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./target/site/jacoco-aggregate/jacoco.xml
+          flags: pr-validation,unittests
+          name: pr-${{ needs.pr-context-analysis.outputs.pr-number }}-coverage
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Generate Coverage Report for PR Comment
+        if: always()
+        uses: madrapps/jacoco-report@v1.6.1
+        with:
+          paths: ./target/site/jacoco-aggregate/jacoco.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 80
+          min-coverage-changed-files: 75
+          title: 📊 Code Coverage Report (PR #${{ needs.pr-context-analysis.outputs.pr-number }})
+          update-comment: true
+          pass-emoji: '✅'
+          fail-emoji: '❌'
+
+      - name: Archive Test & Coverage Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-${{ needs.pr-context-analysis.outputs.pr-number }}-test-coverage-reports
+          path: |
+            **/target/surefire-reports/**/*
+            **/target/failsafe-reports/**/*
+            **/target/site/jacoco/**/*
+            **/target/site/jacoco-aggregate/**/*
+          if-no-files-found: ignore
+
+  # 🏁 Итоговая оценка готовности PR к мержу
+  pr-readiness-assessment:
+    name: 🏁 PR Readiness Assessment
+    runs-on: ubuntu-latest
+    needs: [pr-context-analysis, code-quality-validation, comprehensive-testing]
+    if: always()
+
+    steps:
+      - name: Evaluate PR Readiness
+        run: |
+          echo "::group::🏁 Pull Request Readiness Assessment"
+
+          PR_NUMBER="${{ needs.pr-context-analysis.outputs.pr-number }}"
+          QUALITY_STATUS="${{ needs.code-quality-validation.result }}"
+          TESTING_STATUS="${{ needs.comprehensive-testing.result }}"
+
+          echo "📊 Validation Summary for PR #$PR_NUMBER:"
+          echo "  ⚡ Code Quality & Compilation: $QUALITY_STATUS"
+          echo "  🧪 Tests & Coverage: $TESTING_STATUS"
+
+          if [[ "$QUALITY_STATUS" == "success" && "$TESTING_STATUS" == "success" ]]; then
+            echo ""
+            echo "✅ PR #$PR_NUMBER is READY for review and merge!"
+            echo "All quality gates passed successfully."
+            echo "status=ready-for-merge" >> $GITHUB_OUTPUT
+          else
+            echo ""
+            echo "❌ PR #$PR_NUMBER requires FIXES before merge"
+            echo "Please address the failing checks before requesting review."
+            echo "status=requires-fixes" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          echo "::endgroup::"
+
+      - name: Generate PR Summary
+        if: always()
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
+          ## 🔍 Pull Request Validation Results
+
+          ### 📋 PR Details
+          - **PR Number**: #${{ needs.pr-context-analysis.outputs.pr-number }}
+          - **Source**: `${{ needs.pr-context-analysis.outputs.source-branch }}`
+          - **Target**: `${{ needs.pr-context-analysis.outputs.target-branch }}`
+          - **Author**: @${{ needs.pr-context-analysis.outputs.author }}
+
+          ### 🎯 Quality Gates
+          | Check | Status | Details |
+          |-------|---------|---------|
+          | ⚡ Code Quality & Compilation | ${{ needs.code-quality-validation.result == 'success' && '✅ Passed' || '❌ Failed' }} | Checkstyle validation & compilation |
+          | 🧪 Tests & Coverage | ${{ needs.comprehensive-testing.result == 'success' && '✅ Passed' || '❌ Failed' }} | Unit/integration tests with coverage |
+
+          ### 📊 Coverage Requirements
+          - **Overall Coverage**: ≥ 80%
+          - **Changed Files Coverage**: ≥ 75%
+
+          ### 🎉 Next Steps
+          ${{ (needs.code-quality-validation.result == 'success' && needs.comprehensive-testing.result == 'success') && '✅ **Ready for Review** - All checks passed! You can request code review.' || '❌ **Requires Fixes** - Please address failing checks before requesting review.' }}
+          EOF

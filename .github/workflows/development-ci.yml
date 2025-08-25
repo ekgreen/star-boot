@@ -1,0 +1,175 @@
+# 🛠️ Development CI - Быстрая валидация для dev веток
+#
+# Выполняет минимальные проверки для development веток:
+# - Быстрая компиляция для раннего обнаружения проблем
+# - Без полного тестирования (экономия ресурсов)
+# - Подходит для feature веток и development потока
+#
+# Триггеры: push в development и feature ветки
+name: Development CI
+
+on:
+  push:
+    branches:
+      - develop
+      - 'dev/**'
+      - 'feature/**'
+      - 'feat/**'
+      - 'bugfix/**'
+      - 'hotfix/**'
+
+jobs:
+  # 📋 Анализ контекста development ветки
+  dev-branch-context:
+    name: 📋 Development Branch Context
+    runs-on: ubuntu-latest
+    outputs:
+      branch-name: ${{ github.ref_name }}
+      branch-type: ${{ steps.classify.outputs.branch-type }}
+      commit-sha: ${{ github.sha }}
+
+    steps:
+      - name: Classify Branch Type
+        id: classify
+        run: |
+          BRANCH="${{ github.ref_name }}"
+
+          if [[ "$BRANCH" == "develop" ]]; then
+            echo "branch-type=main-development" >> $GITHUB_OUTPUT
+            echo "📋 Branch type: Main Development"
+          elif [[ "$BRANCH" == feature/* ]] || [[ "$BRANCH" == feat/* ]]; then
+            echo "branch-type=feature" >> $GITHUB_OUTPUT
+            echo "📋 Branch type: Feature Development"
+          elif [[ "$BRANCH" == bugfix/* ]]; then
+            echo "branch-type=bugfix" >> $GITHUB_OUTPUT
+            echo "📋 Branch type: Bug Fix"
+          elif [[ "$BRANCH" == hotfix/* ]]; then
+            echo "branch-type=hotfix" >> $GITHUB_OUTPUT
+            echo "📋 Branch type: Hotfix"
+          else
+            echo "branch-type=general-development" >> $GITHUB_OUTPUT
+            echo "📋 Branch type: General Development"
+          fi
+
+      - name: Display Development Context
+        run: |
+          echo "🛠️ Development CI Pipeline Started"
+          echo "🌿 Branch: ${{ github.ref_name }}"
+          echo "🏷️ Type: ${{ steps.classify.outputs.branch-type }}"
+          echo "📝 Commit: ${{ github.sha }}"
+          echo "👤 Author: ${{ github.event.head_commit.author.name }}"
+
+  # ⚡ Быстрая компиляция для раннего обнаружения проблем
+  rapid-build-validation:
+    name: ⚡ Rapid Build Validation
+    runs-on: ubuntu-latest
+    environment: dev
+    needs: dev-branch-context
+
+    steps:
+      - name: Checkout Development Branch
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 24
+        uses: actions/setup-java@v4
+        with:
+          java-version: '24'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Fast Compilation Check
+        run: |
+          echo "::group::⚡ Fast build validation for development"
+          echo "Performing quick compilation to catch basic issues early..."
+          echo "Branch: ${{ needs.dev-branch-context.outputs.branch-name }}"
+          echo "Type: ${{ needs.dev-branch-context.outputs.branch-type }}"
+
+          # Быстрая компиляция без дополнительных проверок
+          mvn clean compile -B -q \
+            -Dskip.checkstyle=true \
+            -Dskip.tests=true
+
+          echo "✅ Fast build validation completed successfully"
+          echo "::endgroup::"
+
+      # Дополнительная валидация для develop ветки
+      - name: Enhanced Validation for Main Development
+        if: needs.dev-branch-context.outputs.branch-type == 'main-development'
+        run: |
+          echo "::group::🔍 Enhanced validation for develop branch"
+          echo "Running additional checks for main development branch..."
+
+          # Для develop ветки добавляем базовую валидацию стиля
+          mvn validate -B -q
+
+          echo "✅ Enhanced validation completed"
+          echo "::endgroup::"
+
+  # 🏁 Итоговый статус development CI
+  development-ci-summary:
+    name: 🏁 Development CI Summary
+    runs-on: ubuntu-latest
+    needs: [dev-branch-context, rapid-build-validation]
+    if: always()
+
+    steps:
+      - name: Generate Development CI Summary
+        run: |
+          echo "::group::🏁 Development CI Summary"
+
+          BRANCH="${{ needs.dev-branch-context.outputs.branch-name }}"
+          BRANCH_TYPE="${{ needs.dev-branch-context.outputs.branch-type }}"
+          BUILD_STATUS="${{ needs.rapid-build-validation.result }}"
+
+          echo "📊 Development CI Results:"
+          echo "  🌿 Branch: $BRANCH"
+          echo "  🏷️ Type: $BRANCH_TYPE"
+          echo "  ⚡ Build validation: $BUILD_STATUS"
+
+          if [[ "$BUILD_STATUS" == "success" ]]; then
+            echo ""
+            echo "✅ Development CI completed successfully!"
+            echo "🚀 $BRANCH is ready for further development"
+
+            case "$BRANCH_TYPE" in
+              "main-development")
+                echo "💡 Tip: Ready to create feature branches from develop"
+                ;;
+              "feature")
+                echo "💡 Tip: Ready to create PR to develop when feature is complete"
+                ;;
+              "bugfix"|"hotfix")
+                echo "💡 Tip: Ready to create PR to main/develop when fix is complete"
+                ;;
+            esac
+          else
+            echo ""
+            echo "❌ Development CI failed"
+            echo "🔧 Please fix compilation issues in $BRANCH"
+            exit 1
+          fi
+
+          echo "::endgroup::"
+
+      - name: Create Development Summary
+        if: always()
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
+          ## 🛠️ Development CI Results
+
+          ### 🌿 Branch Information
+          - **Branch**: `${{ needs.dev-branch-context.outputs.branch-name }}`
+          - **Type**: ${{ needs.dev-branch-context.outputs.branch-type }}
+          - **Commit**: `${{ needs.dev-branch-context.outputs.commit-sha }}`
+
+          ### ⚡ Validation Results
+          | Check | Status | Description |
+          |-------|---------|-------------|
+          | ⚡ Rapid Build | ${{ needs.rapid-build-validation.result == 'success' && '✅ Passed' || '❌ Failed' }} | Fast compilation validation |
+
+          ### 🎯 Branch Workflow
+          ${{ needs.dev-branch-context.outputs.branch-type == 'main-development' && '**Develop Branch** - Main development line, ready for feature branching' || needs.dev-branch-context.outputs.branch-type == 'feature' && '**Feature Branch** - Ready to create PR to develop when complete' || needs.dev-branch-context.outputs.branch-type == 'bugfix' && '**Bugfix Branch** - Ready to create PR when fix is complete' || needs.dev-branch-context.outputs.branch-type == 'hotfix' && '**Hotfix Branch** - Ready to create PR for urgent fix' || '**Development Branch** - Continue development as needed' }}
+
+          ### 💡 Next Steps
+          ${{ needs.rapid-build-validation.result == 'success' && '✅ **Continue Development** - Build validation passed, development can continue.' || '❌ **Fix Required** - Compilation issues detected, please resolve before continuing.' }}
+          EOF
