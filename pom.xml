@@ -56,12 +56,13 @@
         <module>star-boot-cache</module>
         <module>star-boot-data-access</module>
         <module>star-boot-dictionaries</module>
+        <module>star-boot-code-smell/coverage-report</module>
     </modules>
 
     <profiles>
         <!-- Профиль для развертывания в собственный Nexus OSS -->
         <profile>
-            <id>nexus-deploy</id>
+            <id>deep-space-deploy</id>
 
             <properties>
                 <skip.deploy>false</skip.deploy>
@@ -84,7 +85,6 @@
             </distributionManagement>
 
             <build>
-
 
                 <plugins>
                     <!-- Deploy Plugin -->
@@ -243,18 +243,19 @@
         <skip.deploy>false</skip.deploy>
         <sonatype.publishing.server.id>ossrh</sonatype.publishing.server.id>
         <gpg.key.id>${env.GPG_KEY_ID}</gpg.key.id>
-        <gpg.passphrase>${env.GPG_PASSPHRASE}</gpg.passphrase>
 
         <skip.sonar>false</skip.sonar>
         <sonar.host.url>${env.SONAR_URL}</sonar.host.url>
         <sonar.token>${env.SONAR_TOKEN}</sonar.token>
-        <sonar.branch.name>main</sonar.branch.name>
+        <!-- <sonar.branch.name>main</sonar.branch.name>-->
         <sonar.projectKey>star-boot</sonar.projectKey>
         <sonar.projectName>Star Boot</sonar.projectName>
         <sonar.java.source>${maven.compiler.source}</sonar.java.source>
         <sonar.java.target>${maven.compiler.target}</sonar.java.target>
 
         <skip.show.props>false</skip.show.props>
+
+        <skip.container.tests>false</skip.container.tests>
 
         <!-- Spring Boot (управляется через spring-boot-dependencies) -->
         <spring-boot.version>3.5.4</spring-boot.version>
@@ -596,8 +597,7 @@
 
                         <systemPropertyVariables>
                             <!-- Allure результаты -->
-                            <allure.results.directory>${project.build.directory}/allure-results
-                            </allure.results.directory>
+                            <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
                             <!-- Spring Boot тестовые профили -->
                             <spring.profiles.active>test</spring.profiles.active>
                         </systemPropertyVariables>
@@ -632,7 +632,6 @@
                     <version>${jacoco-maven-plugin.version}</version>
                     <configuration>
                         <skip>${skip.unit.tests}</skip>
-
                         <excludes>
                             <!-- Lombok сгенерированный код -->
                             <exclude>**/*$*</exclude>
@@ -647,15 +646,17 @@
                             <!-- Auto-configuration классы -->
                             <exclude>**/autoconfigure/**</exclude>
                         </excludes>
-
                     </configuration>
                     <executions>
+                        <!-- Подготовка агента для всех модулей -->
                         <execution>
                             <id>prepare-agent</id>
                             <goals>
                                 <goal>prepare-agent</goal>
                             </goals>
                         </execution>
+
+                        <!-- Отчет для каждого модуля -->
                         <execution>
                             <id>report</id>
                             <phase>test</phase>
@@ -663,6 +664,25 @@
                                 <goal>report</goal>
                             </goals>
                         </execution>
+
+                        <!-- Подготовка агента для интеграционных тестов -->
+                        <execution>
+                            <id>prepare-agent-integration</id>
+                            <goals>
+                                <goal>prepare-agent-integration</goal>
+                            </goals>
+                        </execution>
+
+                        <!-- Отчет для интеграционных тестов -->
+                        <execution>
+                            <id>report-integration</id>
+                            <phase>post-integration-test</phase>
+                            <goals>
+                                <goal>report-integration</goal>
+                            </goals>
+                        </execution>
+
+                        <!-- Проверка покрытия -->
                         <execution>
                             <id>check</id>
                             <phase>verify</phase>
@@ -690,42 +710,41 @@
                                 </rules>
                             </configuration>
                         </execution>
+
+                        <!-- Принудительный merge для данного профиля -->
                         <execution>
-                            <id>merge-reports</id>
-                            <phase>verify</phase>
+                            <id>merge-unit-and-integration</id>
+                            <phase>post-integration-test</phase>
                             <goals>
                                 <goal>merge</goal>
                             </goals>
                             <configuration>
-                                <skip>${skip.on.project.root}</skip>
                                 <fileSets>
                                     <fileSet>
-                                        <directory>${project.build.directory}/../</directory>
+                                        <directory>${project.build.directory}</directory>
                                         <includes>
-                                            <include>**/target/jacoco.exec</include>
-                                            <include>**/target/jacoco-it.exec</include>
+                                            <include>jacoco.exec</include>
+                                            <include>jacoco-it.exec</include>
                                         </includes>
                                     </fileSet>
                                 </fileSets>
                                 <destFile>${project.build.directory}/jacoco-merged.exec</destFile>
                             </configuration>
                         </execution>
+
+                        <!-- Генерация отчета из merged файла -->
                         <execution>
-                            <id>report-aggregate</id>
+                            <id>report-merged</id>
                             <phase>verify</phase>
                             <goals>
-                                <goal>report-aggregate</goal>
+                                <goal>report</goal>
                             </goals>
                             <configuration>
-                                <skip>${skip.on.project.root}</skip>
-                                <dataFileIncludes>
-                                    <dataFileInclude>**/target/jacoco.exec</dataFileInclude>
-                                    <dataFileInclude>**/target/jacoco-it.exec</dataFileInclude>
-                                    <dataFileInclude>**/target/jacoco-merged.exec</dataFileInclude>
-                                </dataFileIncludes>
-                                <outputDirectory>${project.build.directory}/site/jacoco-aggregate</outputDirectory>
+                                <dataFile>${project.build.directory}/jacoco-merged.exec</dataFile>
+                                <outputDirectory>${project.build.directory}/site/jacoco-merged</outputDirectory>
                             </configuration>
                         </execution>
+
                     </executions>
                 </plugin>
 
@@ -738,6 +757,8 @@
                         <reportVersion>${allure.version}</reportVersion>
                         <resultsDirectory>${project.build.directory}/allure-results</resultsDirectory>
                         <reportDirectory>${project.build.directory}/allure-report</reportDirectory>
+                        <!-- Добавьте эти настройки для предотвращения создания .allure папок -->
+                        <installDirectory>${user.home}/.m2/repository/io/qameta/allure/allure-commandline/${allure.version}</installDirectory>
                     </configuration>
                     <executions>
                         <execution>
@@ -989,7 +1010,7 @@
                     <configuration>
                         <skip>${skip.deploy}</skip>
                         <keyname>${gpg.key.id}</keyname>
-                        <passphrase>${gpg.passphrase}</passphrase>
+                        <passphrase>${env.GPG_PASSPHRASE}</passphrase>
                     </configuration>
                     <executions>
                         <execution>
@@ -1085,15 +1106,12 @@
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
             </plugin>
-            <!-- JaCoCo агрегация на уровне корневого проекта -->
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-            </plugin>
+
             <!-- Вывод разерзолвленных свойст (везде кроме дева отключать) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-help-plugin</artifactId>
+                <inherited>false</inherited>
             </plugin>
         </plugins>
 

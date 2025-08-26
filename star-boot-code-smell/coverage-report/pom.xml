@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.ekgreen</groupId>
+        <artifactId>star-boot</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>code-smell-coverage-report</artifactId>
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>Агрегированный отчет покрытия кода для всех модулей Star Boot</description>
+    <packaging>pom</packaging>
+
+    <properties>
+    </properties>
+
+    <!-- Зависимости на все модули, которые нужно включить в отчет -->
+    <dependencies>
+        <!-- Основные модули -->
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-model-and-interfaces</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-reflection</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-serialization-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-json-serialization-implementation</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-toolbox</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-spring</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-snowflake-id</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- HTTP Client модули -->
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-http-client-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-ok-http-client-implementation</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-http-client-starter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Cache модули -->
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-cache-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Data Access модули -->
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-data-access-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-data-access-implementation</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-jooq-data-access</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-data-access-starter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Dictionaries модули -->
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-dictionaries-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-dictionaries-implementation</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-jdbc-dictionaries-engine</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-dictionaries-starter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- JaCoCo для агрегированного отчета -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <!-- Агрегированный отчет -->
+                    <execution>
+                        <id>report-aggregate</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report-aggregate</goal>
+                        </goals>
+                        <configuration>
+                            <title>Star Boot - Агрегированный отчет покрытия</title>
+                            <outputDirectory>${project.reporting.outputDirectory}/jacoco-aggregate</outputDirectory>
+                            <includeCurrentProject>false</includeCurrentProject>
+
+                            <!-- Исключения для агрегированного отчета -->
+                            <excludes>
+                                <!-- Lombok сгенерированный код -->
+                                <exclude>**/*$*</exclude>
+                                <!-- Spring Boot конфигурация -->
+                                <exclude>**/config/**</exclude>
+                                <exclude>**/configuration/**</exclude>
+                                <!-- DTO классы -->
+                                <exclude>**/dto/**</exclude>
+                                <exclude>**/model/**</exclude>
+                                <!-- Entity классы -->
+                                <exclude>**/entity/**</exclude>
+                                <exclude>**/entities/**</exclude>
+                                <!-- Spring Boot Application класс -->
+                                <exclude>**/*Application.*</exclude>
+                                <!-- Auto-configuration классы -->
+                                <exclude>**/autoconfigure/**</exclude>
+                                <!-- JOOQ сгенерированные классы -->
+                                <exclude>**/generated/**</exclude>
+                                <!-- Константы и енумы (если нужно) -->
+                                <exclude>**/constants/**</exclude>
+                                <!-- Исключить тестовые классы (на всякий случай) -->
+                                <exclude>**/*Test*</exclude>
+                                <exclude>**/*IT*</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Maven Site Plugin для красивых отчетов -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <configuration>
+                    <locales>en,ru</locales>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-descriptor</id>
+                        <goals>
+                            <goal>attach-descriptor</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <!-- Reporting для Maven Site -->
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>report-aggregate</report>
+                        </reports>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <title>Star Boot - Покрытие кода</title>
+                        </configuration>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+
+            <!-- Project Info Reports -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>3.4.5</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>index</report>
+                            <report>summary</report>
+                            <report>modules</report>
+                            <report>dependencies</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+        </plugins>
+    </reporting>
+</project>

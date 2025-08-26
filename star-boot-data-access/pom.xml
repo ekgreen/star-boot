@@ -22,4 +22,8 @@
         <module>star-boot-data-access-starter</module>
     </modules>
 
+    <properties>
+        <skip.on.project.root>true</skip.on.project.root>
+    </properties>
+
 </project>
