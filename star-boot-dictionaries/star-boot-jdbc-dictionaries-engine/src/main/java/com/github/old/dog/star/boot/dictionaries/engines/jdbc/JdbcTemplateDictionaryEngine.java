@@ -15,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.ArgumentPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.util.StringUtils;
 import com.github.old.dog.star.boot.dictionaries.api.DictionaryAttributeMapper;
 import com.github.old.dog.star.boot.dictionaries.api.DictionaryEngine;
 import com.github.old.dog.star.boot.dictionaries.api.DictionaryRow;
@@ -181,30 +180,6 @@ public class JdbcTemplateDictionaryEngine implements DictionaryEngine {
 
     // ========== Методы валидации параметров ==========
 
-    /**
-     * Валидирует общий параметр на null.
-     */
-    private void validateParameter(Object parameter, String parameterName) {
-        if (parameter == null) {
-            throw new IllegalArgumentException("Параметр " + parameterName + " не может быть null");
-        }
-    }
-
-    /**
-     * Валидирует строковый параметр.
-     */
-    private void validateStringParameter(String parameter, String parameterName) {
-        if (!StringUtils.hasText(parameter)) {
-            throw new IllegalArgumentException("Параметр " + parameterName + " не может быть null или пустым");
-        }
-    }
-
-    /**
-     * Нормализует строковый параметр (обрезает пробелы).
-     */
-    private String normalizeStringParameter(String parameter) {
-        return parameter != null ? parameter.trim() : null;
-    }
 
     // ========== Обработка исключений ==========
 
@@ -261,7 +236,7 @@ public class JdbcTemplateDictionaryEngine implements DictionaryEngine {
 
         @Override
         public int getId() {
-            return getAttribute("id");
+            return Objects.requireNonNull(getAttribute("id"), "id cannot be null");
         }
 
         @Override

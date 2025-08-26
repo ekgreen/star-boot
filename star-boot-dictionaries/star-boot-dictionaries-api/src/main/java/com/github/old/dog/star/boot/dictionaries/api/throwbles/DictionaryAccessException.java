@@ -1,6 +1,7 @@
 package com.github.old.dog.star.boot.dictionaries.api.throwbles;
 
 import com.github.old.dog.star.boot.dictionaries.api.DictionaryMetadata;
+import com.github.old.dog.star.boot.model.Tokens;
 
 /**
  * Исключение, возникающее при проблемах с доступом к атрибутам словарного объекта.
@@ -99,7 +100,7 @@ public class DictionaryAccessException extends DictionaryMetadataException {
         super(String.format("Нет доступа для %s атрибута '%s' в классе '%s': %s",
                 accessType.getDescription(),
                 attributeName,
-                targetClass != null ? targetClass.getSimpleName() : "unknown",
+                targetClass != null ? targetClass.getSimpleName() : Tokens.UNKNOWN,
                 cause != null ? cause.getMessage() : "неизвестная причина"),
             cause);
         this.attributeName = attributeName;

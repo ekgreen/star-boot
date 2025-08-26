@@ -29,11 +29,11 @@ public class Pair<L, R> {
     }
 
     public L getKey() {
-        return left;
+        return getLeft();
     }
 
     public R getValue() {
-        return right;
+        return getRight();
     }
 
     public String concat(String separator) {

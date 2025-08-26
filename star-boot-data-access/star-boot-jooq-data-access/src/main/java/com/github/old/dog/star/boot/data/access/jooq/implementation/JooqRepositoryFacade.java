@@ -8,6 +8,7 @@ import com.github.old.dog.star.boot.data.access.jooq.api.template.JooqTemplate;
 import com.github.old.dog.star.boot.data.access.jooq.api.template.JooqTemplateOperation;
 import com.github.old.dog.star.boot.data.access.jooq.api.template.JooqTransactionalOperation;
 import com.github.old.dog.star.boot.interfaces.Sequence;
+import com.github.old.dog.star.boot.model.Tokens;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -176,21 +177,6 @@ public class JooqRepositoryFacade<RECORD extends TableRecord<RECORD>, POJO, ID, 
             operationName, executionTime, getTableName(), exception.getMessage(), exception);
     }
 
-    /**
-     * Валидирует параметры для настройки последовательности.
-     *
-     * @param sequenceKey ключ последовательности
-     * @param sequence    объект последовательности
-     * @throws IllegalArgumentException если параметры некорректны
-     */
-    private void validateSequenceParameters(String sequenceKey, Sequence<?> sequence) {
-        if (sequenceKey == null || sequenceKey.trim().isEmpty()) {
-            throw new IllegalArgumentException("Sequence key cannot be null or empty");
-        }
-        if (sequence == null) {
-            throw new IllegalArgumentException("Sequence cannot be null");
-        }
-    }
 
     /**
      * Получает имя таблицы для логирования.
@@ -204,7 +190,7 @@ public class JooqRepositoryFacade<RECORD extends TableRecord<RECORD>, POJO, ID, 
             if (log.isTraceEnabled()) {
                 log.trace("Could not determine table name: {}", e.getMessage());
             }
-            return "unknown";
+            return Tokens.UNKNOWN;
         }
     }
 

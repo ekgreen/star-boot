@@ -14,6 +14,11 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.github.old.dog.star.boot.interfaces.BiExConsumer;
 import com.github.old.dog.star.boot.interfaces.BiExFunction;
 import com.github.old.dog.star.boot.reflection.iterable.ArrayToIterable;
@@ -22,11 +27,6 @@ import com.github.old.dog.star.boot.reflection.iterable.JsonNodeToIterable;
 import com.github.old.dog.star.boot.reflection.iterable.MapToIterable;
 import com.github.old.dog.star.boot.reflection.iterable.ToIterable;
 import com.github.old.dog.star.boot.throwbles.Throwables;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * Utility class providing comprehensive reflection operations for Java objects.
@@ -66,7 +66,7 @@ public final class ReflectionTools {
     /**
      * Checks if an object is assignable to a specific class type.
      *
-     * @param subject the object to check for assignability
+     * @param subject        the object to check for assignability
      * @param assignableFrom the target class to check assignability to
      * @return true if the object is not null and its class is assignable to the target class
      */
@@ -77,7 +77,7 @@ public final class ReflectionTools {
     /**
      * Checks if a class is assignable to another class type.
      *
-     * @param cls the class to check for assignability
+     * @param cls            the class to check for assignability
      * @param assignableFrom the target class to check assignability to
      * @return true if the class is assignable to the target class
      */
@@ -88,7 +88,7 @@ public final class ReflectionTools {
     /**
      * Checks if a class is not assignable to another class type.
      *
-     * @param cls the class to check for non-assignability
+     * @param cls            the class to check for non-assignability
      * @param assignableFrom the target class to check non-assignability to
      * @return true if the class is not assignable to the target class
      */
@@ -315,7 +315,7 @@ public final class ReflectionTools {
     /**
      * Iterates over a tree-like object, applying a consumer function to each key-value pair.
      *
-     * @param subject the tree-like object to iterate over
+     * @param subject  the tree-like object to iterate over
      * @param consumer the function to apply to each key-value pair
      */
     public static void forEachTree(@Nullable Object subject, BiConsumer<String, Object> consumer) {
@@ -346,7 +346,7 @@ public final class ReflectionTools {
     /**
      * Iterates over an array-like object, applying a consumer function to each index-value pair.
      *
-     * @param subject the array-like object to iterate over
+     * @param subject  the array-like object to iterate over
      * @param consumer the function to apply to each index-value pair
      */
     public static void forEachArray(@Nullable Object subject, BiConsumer<Integer, Object> consumer) {
@@ -361,7 +361,7 @@ public final class ReflectionTools {
      * This method combines tree and array iteration, applying the consumer to all
      * key-value pairs from both structures if applicable.
      *
-     * @param subject the iterable object to iterate over
+     * @param subject  the iterable object to iterate over
      * @param consumer the function to apply to each key-value pair
      */
     public static void forEachIterable(@Nullable Object subject, BiConsumer<Object, Object> consumer) {
@@ -384,7 +384,7 @@ public final class ReflectionTools {
      * including private fields, and provides both the Field object and its current value
      * to the consumer function.
      *
-     * @param subject the object whose fields to iterate over
+     * @param subject  the object whose fields to iterate over
      * @param consumer the function to apply to each field-value pair
      */
     public static void forEachField(@Nullable Object subject, BiConsumer<Field, Object> consumer) {
@@ -404,8 +404,8 @@ public final class ReflectionTools {
      * and then restores the original accessibility state.
      *
      * @param subjectField the field to set the value on
-     * @param subject the object instance containing the field
-     * @param value the new value to set
+     * @param subject      the object instance containing the field
+     * @param value        the new value to set
      * @throws RuntimeException if the field cannot be accessed or set
      */
     public static void setValue(@NotNull Field subjectField, @Nullable Object subject, @Nullable Object value) {
@@ -418,8 +418,8 @@ public final class ReflectionTools {
      * This method reads the current value of the field and passes both the Field object
      * and the retrieved value to the provided consumer function.
      *
-     * @param field the field to access
-     * @param subject the object instance containing the field
+     * @param field    the field to access
+     * @param subject  the object instance containing the field
      * @param consumer the function to receive the field and its value
      */
     public static void accessValue(@NotNull Field field, @Nullable Object subject, @NotNull BiExConsumer<Field, Object> consumer) {
@@ -434,7 +434,7 @@ public final class ReflectionTools {
      * and then restores the original accessibility state.
      *
      * @param subjectField the field to read the value from
-     * @param subject the object instance containing the field
+     * @param subject      the object instance containing the field
      * @return the current value of the field
      * @throws RuntimeException if the field cannot be accessed
      */
@@ -449,9 +449,9 @@ public final class ReflectionTools {
      * applies the provided function, and then restores the original accessibility state.
      * This is the core method used by other field access operations.
      *
-     * @param <R> the return type of the function
-     * @param field the field to access
-     * @param subject the object instance containing the field
+     * @param <R>      the return type of the function
+     * @param field    the field to access
+     * @param subject  the object instance containing the field
      * @param function the function to apply to the field and object
      * @return the result of applying the function, or null if the subject is null
      * @throws RuntimeException if the field operation fails
@@ -482,8 +482,8 @@ public final class ReflectionTools {
      * This is a convenience method that wraps a BiExConsumer as a BiExFunction
      * and delegates to {@link #applyAccessible}.
      *
-     * @param field the field to access
-     * @param subject the object instance containing the field
+     * @param field    the field to access
+     * @param subject  the object instance containing the field
      * @param consumer the consumer to execute on the field and object
      */
     public static void accessAccessible(@NotNull Field field, @Nullable Object subject, @NotNull BiExConsumer<Field, Object> consumer) {
@@ -523,10 +523,10 @@ public final class ReflectionTools {
      * Note: The current implementation has a bug - it doesn't use the provided constructor
      * parameters and arguments, always calling the no-args constructor instead.
      *
-     * @param <T> the type of the class to instantiate
-     * @param cls the class to create an instance of
+     * @param <T>                       the type of the class to instantiate
+     * @param cls                       the class to create an instance of
      * @param constructorParameterTypes the parameter types of the desired constructor
-     * @param constructorArguments the arguments to pass to the constructor
+     * @param constructorArguments      the arguments to pass to the constructor
      * @return a new instance of the class, or null if instantiation fails
      * @throws RuntimeException if instantiation fails (wrapped from the original exception)
      */
@@ -560,7 +560,7 @@ public final class ReflectionTools {
      * The method uses breadth-first search through the class hierarchy to locate
      * parameterized type implementations.
      *
-     * @param child the child class to analyze
+     * @param child              the child class to analyze
      * @param expectedSuperClass the parent class or interface with generic types to find
      * @return an array of generic type classes, or empty array if not found or not assignable
      * @throws IllegalStateException if the class is assignable but generic types cannot be extracted
@@ -616,14 +616,14 @@ public final class ReflectionTools {
      * The method includes comprehensive error handling for various edge cases and
      * provides detailed error messages for debugging purposes.
      *
-     * @param pos the zero-based position of the generic type argument to extract
-     * @param child the child class to analyze
+     * @param pos                the zero-based position of the generic type argument to extract
+     * @param child              the child class to analyze
      * @param expectedSuperClass the parent class or interface with generic types to find
      * @return the generic type class at the specified position
-     * @throws IllegalArgumentException if the position is negative
+     * @throws IllegalArgumentException  if the position is negative
      * @throws IndexOutOfBoundsException if the position is beyond the available generic types
-     * @throws IllegalStateException if the parent method returns null or the extracted type is null
-     * @throws RuntimeException if any other unexpected error occurs during extraction
+     * @throws IllegalStateException     if the parent method returns null or the extracted type is null
+     * @throws RuntimeException          if any other unexpected error occurs during extraction
      */
     public static Class<?> getParentGenericTypes(int pos, @NotNull Class<?> child, @NotNull Class<?> expectedSuperClass) {
         try {

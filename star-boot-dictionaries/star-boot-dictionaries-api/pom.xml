@@ -21,6 +21,10 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.github.ekgreen</groupId>
+            <artifactId>star-boot-model-and-interfaces</artifactId>
+        </dependency>
 
     </dependencies>
 

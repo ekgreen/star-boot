@@ -22,4 +22,8 @@
         <module>star-boot-dictionaries-starter</module>
     </modules>
 
+    <properties>
+        <skip.on.project.root>true</skip.on.project.root>
+    </properties>
+
 </project>

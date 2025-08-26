@@ -1,6 +1,7 @@
 package com.github.old.dog.star.boot.dictionaries.api.throwbles;
 
 import com.github.old.dog.star.boot.dictionaries.api.DictionaryMetadata;
+import com.github.old.dog.star.boot.model.Tokens;
 
 /**
  * Исключение, возникающее при ошибке преобразования типов данных в процессе работы с атрибутами.
@@ -76,7 +77,7 @@ public class DictionaryTypeConversionException extends DictionaryMetadataExcepti
         super(String.format("Не удалось преобразовать значение '%s' типа '%s' к типу '%s' для атрибута '%s'",
                 sourceValue,
                 sourceValue != null ? sourceValue.getClass().getSimpleName() : "null",
-                targetType != null ? targetType.getSimpleName() : "unknown",
+                targetType != null ? targetType.getSimpleName() : Tokens.UNKNOWN,
                 attributeName),
             cause);
         this.attributeName = attributeName;

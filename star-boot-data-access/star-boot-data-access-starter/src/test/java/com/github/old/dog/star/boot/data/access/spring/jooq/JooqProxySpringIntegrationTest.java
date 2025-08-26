@@ -14,6 +14,7 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
@@ -35,6 +36,7 @@ import com.github.old.dog.star.boot.data.access.spring.jooq.generated.tables.poj
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @DisplayName("Интеграционный тест системы JOOQ репозиториев с PostgreSQL Testcontainers")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@DisabledIfSystemProperty(named = "skip.container.tests", matches = "true")
 class JooqProxySpringIntegrationTest {
 
     @Autowired

@@ -138,19 +138,19 @@ public class Switchboard<T> implements Function<Switchboard.Fallback<T>, T>, Sup
      * @return the data from either the primary source or the fallback
      */
     public T selectorWithFallback(@NotNull Fallback<T> fallback) {
-        Condition switchFlagCondition;
-        int flag;
+        Condition condition;
+        int proceedFlag;
 
         flagLock.lock();
 
         try {
-            flag = this.flag; // управление на уровне Switchboard
-            switchFlagCondition = this.switchFlagCondition; // управление на уровне пользователя
+            proceedFlag = this.flag; // управление на уровне Switchboard
+            condition = this.switchFlagCondition; // управление на уровне пользователя
         } finally {
             flagLock.unlock();
         }
 
-        if (flag == GREEN && switchFlagCondition.yield()) {
+        if (proceedFlag == GREEN && condition.yield()) {
             return this.tryFallback(fallback);
         }
 
