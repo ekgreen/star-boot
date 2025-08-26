@@ -116,7 +116,7 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./star-boot-code-smell/coverage-report/target/site/jacoco-aggregate/jacoco.xml
+          files: './star-boot-code-smell/coverage-report/target/site/jacoco-aggregate/jacoco.xml'
           flags: pr-validation,unittests
           name: pr-${{ needs.pr-context-analysis.outputs.pr-number }}-coverage
           fail_ci_if_error: false
@@ -126,7 +126,7 @@ jobs:
         if: always()
         uses: madrapps/jacoco-report@v1.6.1
         with:
-          paths: ./star-boot-code-smell/coverage-report/target/site/jacoco-aggregate/jacoco.xml
+          paths: '**/star-boot-code-smell/coverage-report/target/site/jacoco-aggregate/jacoco.xml'
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: 80
           min-coverage-changed-files: 75
